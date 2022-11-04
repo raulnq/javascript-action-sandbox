@@ -1,13 +1,18 @@
-name: 'Wait'
-description: 'Wait a designated number of milliseconds'
+name: 'Your name here'
+description: 'Provide a description here'
+author: 'Your name or organization here'
 inputs:
-  milliseconds:  # id of input
-    description: 'number of milliseconds to wait'
+  github_token:
+    description: 'GitHub token'
     required: true
-    default: '1000'
-outputs:
-  time: # output will be available to future steps
-    description: 'The current time after waiting'
+  release_branch_type:
+    description: 'Release branch type name'
+    required: false
+    default: 'release'
+  develop_branch:
+    description: 'Develop branch name'
+    required: false
+    default: 'develop'
 runs:
   using: 'node16'
   main: 'dist/index.js'

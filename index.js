@@ -1,18 +1,59 @@
 const core = require('@actions/core');
-const wait = require('./wait');
+const path = require('path');
+const { tryToMerge } = require('./automerger.js')
+const {
+  fetch,
+  getCurrentBranch,
+  listBranches,
+  merge,
+  getCurrentPullRequest,
+  hasContentDifference,
+  createPullRequest } = require('./github.js');
 
-
-// most @actions toolkit packages have async methods
 async function run() {
   try {
-    const ms = core.getInput('milliseconds');
-    core.info(`Waiting ${ms} milliseconds ...`);
 
-    core.debug((new Date()).toTimeString()); // debug is only output if you set the secret `ACTIONS_RUNNER_DEBUG` to true
-    await wait(parseInt(ms));
-    core.info((new Date()).toTimeString());
+    const githubWorkspacePath = process.env['GITHUB_WORKSPACE'];
 
-    core.setOutput('time', new Date().toTimeString());
+    if (!githubWorkspacePath) {
+      throw new Error('GITHUB_WORKSPACE not defined')
+    }
+
+    core.info(`GITHUB_WORKSPACE: ${githubWorkspacePath}`)
+
+    const repoPath = path.resolve(githubWorkspacePath);
+
+    const githubRepository = process.env['GITHUB_REPOSITORY'];
+
+    if (!githubRepository) {
+      throw new Error('GITHUB_REPOSITORY not defined');
+    }
+
+    const [owner, repo] = githubRepository.split('/');
+
+    core.info(`owner: ${owner} repository: ${repo}`);
+
+    const releaseBranchType = core.getInput('release_branch_type');
+
+    const developBranch = core.getInput('develop_branch');
+
+    const token = core.getInput('github_token');
+
+    await tryToMerge({
+      repoPath,
+      releaseBranchType,
+      developBranch,
+      getCurrentBranch,
+      fetch,
+      listBranches,
+      token,
+      merge,
+      owner,
+      repo,
+      getCurrentPullRequest,
+      hasContentDifference,
+      createPullRequest
+    });
   } catch (error) {
     core.setFailed(error.message);
   }
